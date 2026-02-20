@@ -4,7 +4,7 @@ import { pb } from '../api/pocketbase';
 import { Settings as CogIcon, LogOut, User, Lock, Mail } from 'lucide-react';
 
 export const Settings = () => {
-    const { isSettingsOpen, toggleSettings, user } = useStore();
+    const { isSettingsOpen, toggleSettings, user, gridConfig, setGridConfig, themeConfig, setThemeConfig } = useStore();
     const [isRegistering, setIsRegistering] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -175,11 +175,61 @@ export const Settings = () => {
             )}
 
             <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px' }}>
+                <h3 style={{ fontSize: '0.9rem', marginBottom: '12px', opacity: 0.6 }}>Appearance</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>Primary Accent</span>
+                        <input
+                            type="color"
+                            value={themeConfig.primary}
+                            onChange={(e) => setThemeConfig({ primary: e.target.value })}
+                            style={{ border: 'none', background: 'none', width: '30px', height: '30px', cursor: 'pointer' }}
+                        />
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>Secondary Accent</span>
+                        <input
+                            type="color"
+                            value={themeConfig.secondary}
+                            onChange={(e) => setThemeConfig({ secondary: e.target.value })}
+                            style={{ border: 'none', background: 'none', width: '30px', height: '30px', cursor: 'pointer' }}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '16px', marginTop: '16px' }}>
                 <h3 style={{ fontSize: '0.9rem', marginBottom: '12px', opacity: 0.6 }}>Grid Configuration</h3>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                    {/* Placeholder for grid scale controls */}
-                    <div style={{ flex: 1, padding: '8px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', fontSize: '0.8rem', textAlign: 'center' }}>
-                        Density: 32x16
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>Columns</span>
+                        <input
+                            type="range" min="8" max="64" step="4"
+                            value={gridConfig.cols}
+                            onChange={(e) => setGridConfig({ cols: parseInt(e.target.value) })}
+                            style={{ width: '120px', accentColor: 'var(--accent-primary)' }}
+                        />
+                        <span style={{ fontSize: '0.8rem', width: '24px', textAlign: 'right' }}>{gridConfig.cols}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>Row Height</span>
+                        <input
+                            type="range" min="10" max="100" step="5"
+                            value={gridConfig.rowHeight}
+                            onChange={(e) => setGridConfig({ rowHeight: parseInt(e.target.value) })}
+                            style={{ width: '120px', accentColor: 'var(--accent-primary)' }}
+                        />
+                        <span style={{ fontSize: '0.8rem', width: '24px', textAlign: 'right' }}>{gridConfig.rowHeight}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>Icon Size</span>
+                        <input
+                            type="range" min="32" max="128" step="4"
+                            value={gridConfig.iconSize}
+                            onChange={(e) => setGridConfig({ iconSize: parseInt(e.target.value) })}
+                            style={{ width: '120px', accentColor: 'var(--accent-primary)' }}
+                        />
+                        <span style={{ fontSize: '0.8rem', width: '24px', textAlign: 'right' }}>{gridConfig.iconSize}</span>
                     </div>
                 </div>
             </div>

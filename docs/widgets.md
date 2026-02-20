@@ -1,53 +1,40 @@
-# Widget Development Guide
+# 🧩 Widget Feature Roadmap
 
-TabDash is designed to be extensible. Adding a new widget involves creating a component and registering it in the `GridItem` and `Canvas` components.
+This document outlines the planned customization options for each widget type in Tabdash.
 
-## 🧱 Widget Structure
+## 🕒 Clock Widget
+The goal is to move the Clock from a simple time display to a highly customizable dashboard element.
 
-Widgets are located in `frontend/src/components/widgets/`. A standard widget should:
-1. Accept a `config` prop for settings.
-2. Be self-contained in its styling.
-3. Handle its own internal logic (e.g., timers for clocks).
+### Planned Features:
+- [ ] **Time Format**: Toggle between 24-hour (default) and 12-hour (AM/PM).
+- [ ] **Show/Hide Seconds**: Toggle the seconds counter for a cleaner look.
+- [ ] **Date Display**: Optional display of date/weekday below the time.
+- [ ] **Timezone Support**: Select a specific city/region to display a world clock.
+- [ ] **Custom Label**: Add a title (e.g., "Mainframe", "Düsseldorf", "New York").
+- [ ] **Style Presets**:
+  - `Digital Minimal`: Center-aligned, thin font.
+  - `Digital Bold`: Large, heavy impact font (current default).
+  - `Retro LED`: 7-segment display style.
+  - `Analog`: The existing analog clock face.
+- [ ] **Scaling**: Auto-adjust font size based on the widget's grid size (`w`/`h`).
 
-### Example Skeleton:
-```jsx
-export const MyNewWidget = ({ config }) => {
-    return (
-        <div style={{ padding: '20px' }}>
-            <h3>{config.title || 'New Widget'}</h3>
-        </div>
-    );
-};
-```
+---
 
-## 🔌 Steps to Add a New Widget
+## ⛅ Weather Widget
+- [ ] **Location Search**: Change the city without re-creating the widget.
+- [ ] **Units**: Toggle between Metric (Celsius) and Imperial (Fahrenheit).
+- [ ] **Forecast**: Toggle between "Current Only" and "3-Day Forecast".
+- [ ] **Refresh Rate**: Manual setting for update interval (e.g., 30m, 1h).
 
-### 1. Create the Component
-Create `frontend/src/components/widgets/MyNewWidget.jsx`.
+---
 
-### 2. Register in GridItem
-Update `frontend/src/components/GridItem.jsx` to render your widget based on `item.config.type`.
+## 📰 RSS Widget
+- [ ] **Stream Feed**: Auto-scrolling headlines.
+- [ ] **Item Limit**: Set number of news items to display (3, 5, 10).
+- [ ] **Image Toggle**: Show/Hide thumbnails for a list-only view.
 
-```jsx
-if (item.config?.type === 'my-new-type') {
-    content = <MyNewWidget config={item.config} />;
-}
-```
+---
 
-### 3. Add to Context Menu
-Update `frontend/src/components/Canvas.jsx` to include an "Add" option for your new widget.
-
-```jsx
-{ 
-    label: 'Add My Widget', 
-    icon: <Plus size={16} />, 
-    onClick: () => handleCreate('widget', { 
-        name: 'My Widget', 
-        fields: { config: { type: 'my-new-type' } }, 
-        position: { x: 0, y: 0, w: 4, h: 4 } 
-    }) 
-}
-```
-
-## ⚙️ Widget Settings
-Widgets can have custom settings toggled via the Context Menu. See the `ClockWidget` "Analog/Digital" implementation in `Canvas.jsx` for a reference on how to use `updateItem` to modify `config` properties.
+## 🔍 Search Widget
+- [ ] **Engine Selection**: Switch between Google, Bing, DuckDuckGo, and Wikipedia.
+- [ ] **Placeholder Text**: Custom text (e.g., "Search the web...", "Ask me anything...").

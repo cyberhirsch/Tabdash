@@ -23,7 +23,6 @@ export const WeatherWidget = ({ config = {} }) => {
 
     return (
         <div
-            className="glass"
             style={{
                 width: '100%',
                 height: '100%',
@@ -32,7 +31,6 @@ export const WeatherWidget = ({ config = {} }) => {
                 justifyContent: 'center',
                 alignItems: 'center',
                 padding: '12px',
-                borderRadius: '16px',
                 gap: '4px'
             }}
         >
@@ -43,6 +41,34 @@ export const WeatherWidget = ({ config = {} }) => {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.7 }}>
                 <span style={{ fontSize: '0.8rem', fontWeight: '500' }}>{city}</span>
                 <span style={{ fontSize: '0.7rem' }}>{weather.condition}</span>
+            </div>
+        </div>
+    );
+};
+
+export const WeatherWidgetSettings = ({ config, setConfig }) => {
+    return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>City</span>
+                <input
+                    type="text"
+                    value={config.city || ''}
+                    onChange={(e) => setConfig({ ...config, city: e.target.value })}
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '4px', padding: '8px' }}
+                    placeholder="Enter city name..."
+                />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>Temperature Unit</span>
+                <select
+                    value={config.unit || 'C'}
+                    onChange={(e) => setConfig({ ...config, unit: e.target.value })}
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '4px', padding: '4px 8px' }}
+                >
+                    <option value="C">Celsius (°C)</option>
+                    <option value="F">Fahrenheit (°F)</option>
+                </select>
             </div>
         </div>
     );

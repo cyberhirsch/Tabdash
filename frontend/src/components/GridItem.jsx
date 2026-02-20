@@ -1,37 +1,73 @@
-import { File as FileIcon, Globe, Layout, MoreVertical, Rss } from 'lucide-react';
+import React, { useRef } from 'react';
+import { File as FileIcon, Globe, Layout, Rss, Settings as Cog, X, MoreVertical } from 'lucide-react';
 import { pb } from '../api/pocketbase';
 import { SearchWidget } from './widgets/SearchWidget';
 import { WeatherWidget } from './widgets/WeatherWidget';
 import { RSSWidget } from './widgets/RSSWidget';
 import { ClockWidget } from './widgets/ClockWidget';
+import { useStore } from '../store/useStore';
 
 export const GridItem = ({ item, onContextMenu }) => {
+    const { gridConfig, deleteItem, setWidgetSettings } = useStore();
+    const dragStartPos = useRef({ x: 0, y: 0 });
+
+    const handleMouseDown = (e) => {
+        dragStartPos.current = { x: e.clientX, y: e.clientY };
+    };
+
     const getIcon = () => {
         if (item.type === 'widget' && (item.config?.type === 'search' || item.config?.type === 'weather' || item.config?.type === 'rss' || item.config?.type === 'clock')) {
             return null;
         }
+
+        const size = gridConfig.iconSize || 64;
 
         if (item.cache_icon) {
             return (
                 <img
                     src={pb.files.getURL(item, item.cache_icon)}
                     alt={item.name}
-                    style={{ width: '40px', height: '40px', borderRadius: '10px', objectFit: 'contain' }}
+                    style={{ width: `${size * 0.7}px`, height: `${size * 0.7}px`, borderRadius: '10px', objectFit: 'contain' }}
                 />
             );
         }
 
+        if (item.type === 'link' && item.config?.url) {
+            try {
+                let urlStr = item.config.url;
+                if (!urlStr.startsWith('http')) urlStr = 'https://' + urlStr;
+                const url = new URL(urlStr);
+                return (
+                    <img
+                        src={`https://www.google.com/s2/favicons?domain=${url.hostname}&sz=64`}
+                        alt={item.name}
+                        style={{ width: `${size * 0.6}px`, height: `${size * 0.6}px`, borderRadius: '8px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))' }}
+                    />
+                );
+            } catch {
+                // Fallback to globe
+            }
+        }
+
         switch (item.type) {
-            case 'link': return <Globe size={32} opacity={0.6} color="var(--accent-primary)" />;
-            case 'file': return <FileIcon size={32} opacity={0.6} color="var(--accent-secondary)" />;
-            case 'widget': return <Layout size={32} opacity={0.6} />;
-            default: return <Layout size={32} opacity={0.6} />;
+            case 'link': return <Globe size={size * 0.5} opacity={0.6} color="var(--accent-primary)" />;
+            case 'file': return <FileIcon size={size * 0.5} opacity={0.6} color="var(--accent-secondary)" />;
+            case 'widget': return <Layout size={size * 0.5} opacity={0.6} />;
+            default: return <Layout size={size * 0.5} opacity={0.6} />;
         }
     };
 
-    const handleClick = () => {
+    const handleClick = (e) => {
+        const dist = Math.sqrt(
+            Math.pow(e.clientX - dragStartPos.current.x, 2) +
+            Math.pow(e.clientY - dragStartPos.current.y, 2)
+        );
+        if (dist > 5) return;
+
         if (item.type === 'link' && item.config?.url) {
-            window.open(item.config.url, '_blank');
+            let url = item.config.url;
+            if (!url.startsWith('http')) url = 'https://' + url;
+            window.open(url, '_blank');
         } else if (item.type === 'file' && item.payload) {
             window.open(pb.files.getURL(item, item.payload), '_blank');
         }
@@ -52,7 +88,7 @@ export const GridItem = ({ item, onContextMenu }) => {
 
         return (
             <div
-                className="glass-card animate-fade-in"
+                className="glass-card widget-container animate-fade-in"
                 style={{
                     width: '100%',
                     height: '100%',
@@ -60,8 +96,18 @@ export const GridItem = ({ item, onContextMenu }) => {
                     flexDirection: 'column',
                     overflow: 'hidden'
                 }}
+                onMouseDown={handleMouseDown}
                 onContextMenu={(e) => onContextMenu(e, item.id)}
             >
+                <div className="widget-controls">
+                    <button className="control-btn" onClick={() => setWidgetSettings(true, item)}>
+                        <Cog size={12} />
+                    </button>
+                    <button className="control-btn delete" onClick={() => deleteItem(item.id)}>
+                        <X size={12} />
+                    </button>
+                </div>
+
                 <div className="drag-handle" style={{
                     height: '14px',
                     width: '100%',
@@ -82,7 +128,6 @@ export const GridItem = ({ item, onContextMenu }) => {
         );
     }
 
-    // Default: Desktop Icon flavor for links and files
     return (
         <div
             className="desktop-icon animate-fade-in"
@@ -98,6 +143,7 @@ export const GridItem = ({ item, onContextMenu }) => {
                 padding: '4px',
                 userSelect: 'none'
             }}
+            onMouseDown={handleMouseDown}
             onClick={handleClick}
             onContextMenu={(e) => onContextMenu(e, item.id)}
         >

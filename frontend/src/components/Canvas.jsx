@@ -3,14 +3,14 @@ import { Responsive, WidthProvider } from 'react-grid-layout/legacy';
 import { useStore } from '../store/useStore';
 import { ContextMenu } from './ContextMenu';
 import { GridItem } from './GridItem';
-import { Plus, Layout, Link as LinkIcon, Trash2, Rss } from 'lucide-react';
+import { Plus, Layout, Link as LinkIcon, Trash2, Rss, LayoutGrid } from 'lucide-react';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export const Canvas = () => {
-    const { items, fetchItems, syncLayout, createItem, deleteItem, user } = useStore();
+    const { items, fetchItems, syncLayout, createItem, deleteItem, user, gridConfig, gridOpacity, showGrid, hideGrid } = useStore();
     const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0, targetId: null });
     const containerRef = useRef(null);
 
@@ -78,8 +78,8 @@ export const Canvas = () => {
         const url = e.dataTransfer.getData('url') || e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
 
         const rect = containerRef.current.getBoundingClientRect();
-        const x = Math.floor((e.clientX - rect.left) / (rect.width / 32));
-        const y = Math.floor((e.clientY - rect.top) / 46);
+        const x = Math.floor((e.clientX - rect.left) / (rect.width / gridConfig.cols));
+        const y = Math.floor((e.clientY - rect.top) / (gridConfig.rowHeight + gridConfig.gap));
 
         if (files.length > 0) {
             for (let i = 0; i < files.length; i++) {
@@ -98,9 +98,11 @@ export const Canvas = () => {
         }
     };
 
-    const onLayoutChange = (currentLayout) => {
+    const handleLayoutChange = (currentLayout) => {
         currentLayout.forEach(layoutItem => {
             const originalItem = items.find(i => i.id === layoutItem.i);
+            if (!originalItem) return;
+
             const pos = {
                 x: layoutItem.x,
                 y: layoutItem.y,
@@ -108,19 +110,53 @@ export const Canvas = () => {
                 h: layoutItem.h
             };
 
-            if (originalItem && (
+            if (
                 originalItem.position?.x !== pos.x ||
                 originalItem.position?.y !== pos.y ||
                 originalItem.position?.w !== pos.w ||
                 originalItem.position?.h !== pos.h
-            )) {
+            ) {
                 syncLayout(layoutItem.i, pos);
             }
         });
     };
 
+    const autoArrange = useCallback(() => {
+        const cols = gridConfig.cols;
+        const icons = items.filter(i => i.type !== 'widget');
+        const widgets = items.filter(i => i.type === 'widget');
+
+        const iconW = 2;
+        const iconH = 3;
+        const iconsPerRow = Math.floor(cols / iconW);
+
+        let y = 0;
+
+        // Place icons in compact rows
+        icons.forEach((icon, idx) => {
+            const col = idx % iconsPerRow;
+            const row = Math.floor(idx / iconsPerRow);
+            const pos = { x: col * iconW, y: row * iconH, w: iconW, h: iconH };
+            syncLayout(icon.id, pos);
+        });
+
+        y = icons.length > 0 ? Math.ceil(icons.length / iconsPerRow) * iconH : 0;
+
+        // Place widgets sequentially below the icons
+        widgets.forEach(widget => {
+            const pos = widget.position || {};
+            const w = pos.w || 8;
+            const h = pos.h || 4;
+            const newPos = { x: 0, y, w, h };
+            syncLayout(widget.id, newPos);
+            y += h;
+        });
+    }, [items, gridConfig.cols, syncLayout]);
+
     const menuItems = useMemo(() => {
         const base = [
+            { label: 'Auto Arrange', icon: <LayoutGrid size={16} />, onClick: autoArrange },
+            { type: 'separator' },
             { label: 'Add Link', icon: <LinkIcon size={16} />, onClick: () => handleCreate('link') },
             { label: 'Add Search Bar', icon: <Layout size={16} />, onClick: () => handleCreate('widget', { name: 'Search', fields: { config: { type: 'search', engine: 'google' } }, position: { x: 0, y: 0, w: 12, h: 2 } }) },
             { label: 'Add Weather Bar', icon: <Layout size={16} />, onClick: () => handleCreate('widget', { name: 'Weather', fields: { config: { type: 'weather', city: 'Berlin' } }, position: { x: 0, y: 0, w: 8, h: 4 } }) },
@@ -144,6 +180,19 @@ export const Canvas = () => {
                 });
             }
 
+            if (targetItem?.type === 'link' || targetItem?.type === 'file') {
+                extraOptions.push({
+                    label: 'Rename Item',
+                    icon: <Plus size={16} />,
+                    onClick: () => {
+                        const newName = prompt('Enter new name (leave empty for icon-only):', targetItem.name);
+                        if (newName !== null) {
+                            useStore.getState().updateItem(targetItem.id, { name: newName });
+                        }
+                    }
+                });
+            }
+
             return [
                 ...extraOptions,
                 ...base,
@@ -151,29 +200,56 @@ export const Canvas = () => {
             ];
         }
         return base;
-    }, [contextMenu.targetId, items, handleCreate, deleteItem]);
+    }, [contextMenu.targetId, items, handleCreate, deleteItem, autoArrange]);
 
     return (
         <div
             ref={containerRef}
             className="canvas-container"
-            style={{ height: '100vh', width: '100vw', padding: '20px' }}
+            style={{ height: '100vh', width: '100vw', padding: '20px', position: 'relative' }}
             onContextMenu={(e) => handleContextMenu(e)}
             onDragOver={(e) => e.preventDefault()}
             onDrop={onDrop}
         >
+            <div
+                className="grid-preview"
+                style={{
+                    position: 'absolute',
+                    top: 20,
+                    left: 20,
+                    right: 20,
+                    bottom: 20,
+                    pointerEvents: 'none',
+                    zIndex: 0,
+                    opacity: gridOpacity,
+                    background: `
+                            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px),
+                            linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px)
+                        `,
+                    backgroundSize: `calc((100% + ${gridConfig.gap}px) / ${gridConfig.cols}) ${gridConfig.rowHeight + gridConfig.gap}px`,
+                    transition: 'opacity 0.5s ease'
+                }}
+            />
+
             <ResponsiveGridLayout
                 className="layout"
                 layouts={{ lg: layout }}
                 breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xss: 0 }}
-                cols={{ lg: 32, md: 24, sm: 12, xs: 8, xss: 4 }}
-                rowHeight={30}
+                cols={{ lg: gridConfig.cols, md: Math.floor(gridConfig.cols * 0.75), sm: Math.floor(gridConfig.cols * 0.5), xs: 8, xss: 4 }}
+                rowHeight={gridConfig.rowHeight}
                 draggableHandle=".drag-handle"
-                onLayoutChange={onLayoutChange}
-                margin={[16, 16]}
+                onDragStart={showGrid}
+                onDragStop={(l) => {
+                    hideGrid();
+                    handleLayoutChange(l);
+                }}
+                onResizeStop={handleLayoutChange}
+                margin={[gridConfig.gap, gridConfig.gap]}
+                compactType={null}
+                preventCollision={false}
             >
                 {items.map(item => (
-                    <div key={item.id} style={{ display: 'flex' }}>
+                    <div key={item.id} i={item.id} className="drag-handle">
                         <GridItem item={item} onContextMenu={handleContextMenu} />
                     </div>
                 ))}

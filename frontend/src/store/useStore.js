@@ -15,6 +15,46 @@ export const useStore = create((set) => ({
     isSettingsOpen: false,
     toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
 
+    widgetSettings: { isOpen: false, item: null },
+    setWidgetSettings: (isOpen, item = null) => set({ widgetSettings: { isOpen, item } }),
+
+    gridConfig: {
+        cols: 32,
+        rowHeight: 30,
+        gap: 16,
+        iconSize: 64
+    },
+    setGridConfig: (config) => {
+        set((state) => ({ gridConfig: { ...state.gridConfig, ...config } }));
+        useStore.getState().triggerGridPreview();
+    },
+    gridOpacity: 0,
+    triggerGridPreview: () => {
+        set({ gridOpacity: 0.3 });
+        if (window._gridTimeout) clearTimeout(window._gridTimeout);
+        window._gridTimeout = setTimeout(() => set({ gridOpacity: 0 }), 10000);
+    },
+    showGrid: () => {
+        if (window._gridTimeout) clearTimeout(window._gridTimeout);
+        set({ gridOpacity: 0.3 });
+    },
+    hideGrid: () => {
+        set({ gridOpacity: 0 });
+    },
+
+    themeConfig: {
+        primary: '#6366f1',
+        secondary: '#a855f7'
+    },
+    setThemeConfig: (config) => {
+        set((state) => {
+            const newTheme = { ...state.themeConfig, ...config };
+            document.documentElement.style.setProperty('--accent-primary', newTheme.primary);
+            document.documentElement.style.setProperty('--accent-secondary', newTheme.secondary);
+            return { themeConfig: newTheme };
+        });
+    },
+
     // Actions
     fetchItems: async () => {
         if (!pb.authStore.model) return [];
@@ -46,7 +86,11 @@ export const useStore = create((set) => ({
                 };
                 record = await pb.collection('TabDash').create(payload);
             }
-            set((state) => ({ items: [...state.items, record] }));
+            set((state) => ({
+                items: state.items.some(i => i.id === record.id)
+                    ? state.items.map(i => i.id === record.id ? record : i)
+                    : [...state.items, record]
+            }));
             return record;
         } catch (error) {
             console.error('Failed to create item:', error);
@@ -91,7 +135,12 @@ export const useStore = create((set) => ({
             set((state) => {
                 let newItems = [...state.items];
                 if (action === 'create') {
-                    newItems.push(record);
+                    const exists = newItems.some(item => item.id === record.id);
+                    if (exists) {
+                        newItems = newItems.map(item => item.id === record.id ? record : item);
+                    } else {
+                        newItems.push(record);
+                    }
                 } else if (action === 'update') {
                     newItems = newItems.map(item => item.id === record.id ? record : item);
                 } else if (action === 'delete') {

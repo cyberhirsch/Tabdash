@@ -1,0 +1,97 @@
+import React, { useState } from 'react';
+import { X, Save, Clock, Cloud, Rss, Search } from 'lucide-react';
+import { useStore } from '../store/useStore';
+import { ClockWidgetSettings } from './widgets/ClockWidget';
+import { WeatherWidgetSettings } from './widgets/WeatherWidget';
+import { SearchWidgetSettings } from './widgets/SearchWidget';
+import { RSSWidgetSettings } from './widgets/RSSWidget';
+
+const SETTINGS_MAP = {
+    clock: ClockWidgetSettings,
+    weather: WeatherWidgetSettings,
+    search: SearchWidgetSettings,
+    rss: RSSWidgetSettings
+};
+
+const ICON_MAP = {
+    clock: Clock,
+    weather: Cloud,
+    rss: Rss,
+    search: Search
+};
+
+const WidgetSettingsContent = ({ item }) => {
+    const { setWidgetSettings, updateItem } = useStore();
+    const [config, setConfig] = useState(item.config || {});
+
+    const handleSave = async () => {
+        await updateItem(item.id, { config });
+        setWidgetSettings(false);
+    };
+
+    const widgetType = config.type;
+    const SettingsComponent = SETTINGS_MAP[widgetType];
+    const IconComponent = ICON_MAP[widgetType] || Clock;
+
+    return (
+        <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000
+        }}>
+            <div className="glass" style={{
+                width: '400px', borderRadius: '24px', padding: '24px',
+                display: 'flex', flexDirection: 'column', gap: '20px',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <IconComponent size={20} color="var(--accent-primary)" />
+                        <h2 style={{ fontSize: '1.2rem', margin: 0, textTransform: 'capitalize' }}>
+                            {widgetType} Settings
+                        </h2>
+                    </div>
+                    <button
+                        onClick={() => setWidgetSettings(false)}
+                        style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', opacity: 0.5 }}
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
+
+                <div style={{ padding: '10px 0' }}>
+                    {SettingsComponent ? (
+                        <SettingsComponent config={config} setConfig={setConfig} />
+                    ) : (
+                        <div style={{ opacity: 0.6, fontSize: '0.9rem', textAlign: 'center' }}>
+                            Advanced settings for {widgetType} coming soon.
+                        </div>
+                    )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                    <button
+                        onClick={handleSave}
+                        className="glass"
+                        style={{
+                            flex: 1, padding: '12px', borderRadius: '12px', background: 'var(--accent-primary)',
+                            color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                        }}
+                    >
+                        <Save size={18} /> Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export const WidgetSettings = () => {
+    const { widgetSettings } = useStore();
+    const { isOpen, item } = widgetSettings;
+
+    if (!isOpen || !item) return null;
+
+    return <WidgetSettingsContent key={item.id} item={item} />;
+};

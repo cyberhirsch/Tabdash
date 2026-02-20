@@ -4,7 +4,13 @@
         "id": "_pb_users_auth_",
         "type": "auth",
         "system": false,
-        "schema": [],
+        "schema": [
+            {
+                "name": "preferences",
+                "type": "json",
+                "options": {}
+            }
+        ],
         "listRule": "id = @request.auth.id",
         "viewRule": "id = @request.auth.id",
         "createRule": "",

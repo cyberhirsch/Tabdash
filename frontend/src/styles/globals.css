@@ -78,14 +78,22 @@ body {
 
 /* Squircle-like smoothing */
 .squircle {
-  mask-image: paint(squircle); /* Future-proof */
+  mask-image: paint(squircle);
+  /* Future-proof */
   border-radius: 22%;
 }
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .animate-fade-in {
@@ -147,4 +155,62 @@ body {
 
 .glass-card:hover .react-resizable-handle {
   opacity: 0.5;
+}
+
+/* Fix for dragging ghosting/lag */
+.react-grid-item.react-draggable-dragging {
+  transition: none !important;
+  z-index: 1000 !important;
+}
+
+.react-grid-item.react-draggable-dragging .animate-fade-in {
+  animation: none !important;
+}
+
+/* Widget Controls */
+.widget-container {
+  position: relative;
+}
+
+.widget-controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 6px;
+  z-index: 10;
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+}
+
+.widget-container:hover .widget-controls {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: all;
+}
+
+.control-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background 0.2s, transform 0.1s;
+}
+
+.control-btn:hover {
+  background: var(--accent-primary);
+  transform: scale(1.1);
+}
+
+.control-btn.delete:hover {
+  background: #ef4444;
 }
