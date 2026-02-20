@@ -1,0 +1,120 @@
+[
+    {
+        "name": "TabdashUsers",
+        "id": "_pb_users_auth_",
+        "type": "auth",
+        "system": false,
+        "schema": [],
+        "listRule": "id = @request.auth.id",
+        "viewRule": "id = @request.auth.id",
+        "createRule": "",
+        "updateRule": "id = @request.auth.id",
+        "deleteRule": "id = @request.auth.id",
+        "options": {
+            "allowEmailAuth": true,
+            "allowOAuth2Auth": true,
+            "allowUsernameAuth": true,
+            "exceptEmailDomains": null,
+            "manageRule": null,
+            "minPasswordLength": 8,
+            "onlyEmailDomains": null,
+            "onlyVerified": false,
+            "requireEmail": false
+        }
+    },
+    {
+        "id": "pbc_tabdash001",
+        "name": "TabDash",
+        "type": "base",
+        "system": false,
+        "schema": [
+            {
+                "name": "owner",
+                "type": "relation",
+                "required": true,
+                "options": {
+                    "collectionId": "_pb_users_auth_",
+                    "cascadeDelete": true,
+                    "minSelect": null,
+                    "maxSelect": 1,
+                    "displayFields": null
+                }
+            },
+            {
+                "name": "type",
+                "type": "select",
+                "required": true,
+                "options": {
+                    "values": [
+                        "board",
+                        "widget",
+                        "link",
+                        "file",
+                        "dock"
+                    ]
+                }
+            },
+            {
+                "name": "parent",
+                "type": "relation",
+                "required": false,
+                "options": {
+                    "collectionId": "pbc_tabdash001",
+                    "cascadeDelete": false,
+                    "minSelect": null,
+                    "maxSelect": 1,
+                    "displayFields": null
+                }
+            },
+            {
+                "name": "name",
+                "type": "text",
+                "options": {}
+            },
+            {
+                "name": "config",
+                "type": "json",
+                "options": {}
+            },
+            {
+                "name": "payload",
+                "type": "file",
+                "options": {
+                    "maxSelect": 1,
+                    "maxSize": 5242880,
+                    "mimeTypes": [],
+                    "thumbs": [],
+                    "protected": false
+                }
+            },
+            {
+                "name": "cache_icon",
+                "type": "file",
+                "options": {
+                    "maxSelect": 1,
+                    "maxSize": 5242880,
+                    "mimeTypes": [
+                        "image/png",
+                        "image/vnd.microsoft.icon",
+                        "image/x-icon",
+                        "image/jpeg",
+                        "image/svg+xml"
+                    ],
+                    "thumbs": [],
+                    "protected": false
+                }
+            },
+            {
+                "name": "position",
+                "type": "json",
+                "options": {}
+            }
+        ],
+        "listRule": "@request.auth.id = owner.id",
+        "viewRule": "@request.auth.id = owner.id",
+        "createRule": "@request.auth.id = owner.id",
+        "updateRule": "@request.auth.id = owner.id",
+        "deleteRule": "@request.auth.id = owner.id",
+        "options": {}
+    }
+]
