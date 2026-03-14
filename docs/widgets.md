@@ -1,6 +1,6 @@
 # 🧩 Widget Feature Roadmap
 
-This document outlines the planned customization options for each widget type in Tabdash.
+This document outlines the planned customization options for each widget type in Tabtop.
 
 ## 🕒 Clock Widget
 The goal is to move the Clock from a simple time display to a highly customizable dashboard element.

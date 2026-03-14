@@ -56,7 +56,7 @@ export const SearchWidgetSettings = ({ config, setConfig }) => {
                 <select
                     value={config.engine || 'google'}
                     onChange={(e) => setConfig({ ...config, engine: e.target.value })}
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '4px', padding: '4px 8px' }}
+                    style={{ background: 'var(--bg-primary)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: `calc(4px * var(--radius-scale, 1))`, padding: '4px 8px' }}
                 >
                     <option value="google">Google</option>
                     <option value="duckduckgo">DuckDuckGo</option>
@@ -69,7 +69,7 @@ export const SearchWidgetSettings = ({ config, setConfig }) => {
                     type="text"
                     value={config.placeholder || ''}
                     onChange={(e) => setConfig({ ...config, placeholder: e.target.value })}
-                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '4px', padding: '8px' }}
+                    style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: `calc(4px * var(--radius-scale, 1))`, padding: '8px' }}
                     placeholder="Search with..."
                 />
             </div>

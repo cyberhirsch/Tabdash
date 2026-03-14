@@ -16,10 +16,10 @@
   /* Grid & Layout */
   --grid-gap: 16px;
   --icon-size: 64px;
-  --border-radius-sm: 8px;
-  --border-radius-md: 16px;
-  --border-radius-lg: 24px;
-  --border-radius-xl: 32px;
+  --border-radius-sm: calc(8px * var(--radius-scale, 1));
+  --border-radius-md: calc(16px * var(--radius-scale, 1));
+  --border-radius-lg: calc(24px * var(--radius-scale, 1));
+  --border-radius-xl: calc(32px * var(--radius-scale, 1));
 
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
@@ -63,17 +63,18 @@ body {
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, calc(0.03 * var(--frame-opacity-scale, 1)));
+  backdrop-filter: blur(calc(12px * var(--frame-opacity-scale, 1)));
+  border: 1px solid rgba(255, 255, 255, calc(0.08 * var(--frame-opacity-scale, 1)));
   border-radius: var(--border-radius-md);
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s;
 }
 
 .glass-card:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, calc(0.05 * max(var(--frame-opacity-scale, 1), 1)));
+  backdrop-filter: blur(calc(12px * max(var(--frame-opacity-scale, 1), 1)));
   transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, calc(0.15 * max(var(--frame-opacity-scale, 1), 1)));
 }
 
 /* Squircle-like smoothing */
@@ -96,8 +97,24 @@ body {
   }
 }
 
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-scale-up {
+  animation: scaleUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 /* Custom Scrollbar */
@@ -112,7 +129,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  border-radius: calc(4px * var(--radius-scale, 1)) ;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -138,23 +155,26 @@ body {
 
 .desktop-icon:hover span {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+  border-radius: calc(4px * var(--radius-scale, 1)) ;
 }
 
 /* React Grid Layout Overrides */
 .react-grid-placeholder {
   background: rgba(255, 255, 255, 0.05) !important;
-  border-radius: 12px !important;
+  border-radius: calc(12px * var(--radius-scale, 1)) !important;
   opacity: 0.5 !important;
 }
 
 .react-resizable-handle {
-  opacity: 0;
-  transition: opacity 0.2s;
+  opacity: 0 !important;
+  background: none !important;
 }
 
-.glass-card:hover .react-resizable-handle {
-  opacity: 0.5;
+.drag-handle {
+  cursor: grab;
+}
+.drag-handle:active {
+  cursor: grabbing;
 }
 
 /* Fix for dragging ghosting/lag */
@@ -194,7 +214,7 @@ body {
 .control-btn {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
+  border-radius: calc(6px * var(--radius-scale, 1)) ;
   width: 24px;
   height: 24px;
   display: flex;

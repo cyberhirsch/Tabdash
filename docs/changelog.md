@@ -1,6 +1,18 @@
 # 📜 Changelog
 
-All notable changes to the Tabdash project will be documented in this file.
+All notable changes to the Tabtop project will be documented in this file.
+
+## [2026-03-12] - Admin Panel & User Security
+### Added
+- **Admin Dashboard**: New administrative panel for managing all user accounts.
+- **Account Type Management**: Ability to toggle users between `trial`, `member`, `patron`, and `admin` statuses via a secure UI.
+- **Admin Bypass**: Automatic bypass of the "Trial Expired" screen for `admin` and `patron` accounts.
+- **Diagnostic Info**: Added a hidden diagnostic viewer and account refresh button to the trial expiry screen to troubleshoot account status issues.
+- **Admin API Rules**: Updated PocketBase schema to allow administrators to list and update other user records while maintaining private data for standard users.
+
+### Fixed
+- **Array-based Roles**: Resolved a bug where PocketBase select fields (like `account_type`) were returned as arrays, causing logic failures in identity checks.
+- **Stale Account Sessions**: Implemented `authRefresh` logic to ensure account status updates (like becoming a Patron) are reflected immediately without requiring a logout.
 
 ## [2026-02-20] - UI Overhaul & Customization
 ### Added

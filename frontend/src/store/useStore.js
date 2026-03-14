@@ -4,7 +4,18 @@ import { pb } from '../api/pocketbase';
 export const useStore = create((set) => ({
     // Auth State
     user: pb.authStore.model,
-    setUser: (user) => set({ user }),
+    setUser: (user) => {
+        set({ user });
+        if (user && user.preferences) {
+            if (user.preferences.gridConfig) set({ gridConfig: { ...user.preferences.gridConfig } });
+            if (user.preferences.themeConfig) {
+                // Merge saved preferences on top of current defaults (preserves any new fields added to defaults)
+                const currentTheme = useStore.getState().themeConfig;
+                const merged = { ...currentTheme, ...user.preferences.themeConfig };
+                useStore.getState().setThemeConfig(merged, true);
+            }
+        }
+    },
 
     // Items State
     items: [],
@@ -15,18 +26,71 @@ export const useStore = create((set) => ({
     isSettingsOpen: false,
     toggleSettings: () => set((state) => ({ isSettingsOpen: !state.isSettingsOpen })),
 
+    isWidgetGalleryOpen: false,
+    toggleWidgetGallery: (open) => set((state) => ({ isWidgetGalleryOpen: open !== undefined ? open : !state.isWidgetGalleryOpen })),
+
     widgetSettings: { isOpen: false, item: null },
     setWidgetSettings: (isOpen, item = null) => set({ widgetSettings: { isOpen, item } }),
 
+    isAdminPanelOpen: false,
+    toggleAdminPanel: () => set((state) => ({ isAdminPanelOpen: !state.isAdminPanelOpen })),
+
+    users: [],
+    fetchUsers: async () => {
+        const currentUser = useStore.getState().user;
+        const role = Array.isArray(currentUser?.account_type) ? currentUser.account_type[0] : currentUser?.account_type;
+        if (!currentUser || role !== 'admin') {
+            console.warn('Unauthorized: Only admins can fetch the user list');
+            return [];
+        }
+        try {
+            const records = await pb.collection('TabtopUsers').getFullList({
+                sort: '-created',
+            });
+            set({ users: records });
+            return records;
+        } catch (error) {
+            console.error('Failed to fetch users:', error);
+            return [];
+        }
+    },
+
+    updateUserStatus: async (userId, data) => {
+        try {
+            const record = await pb.collection('TabtopUsers').update(userId, data);
+            set((state) => {
+                const newUsers = state.users.map(u => u.id === userId ? record : u);
+                // If update is for the current user, update their local state too
+                if (state.user?.id === userId) {
+                    return { users: newUsers, user: record };
+                }
+                return { users: newUsers };
+            });
+            return record;
+        } catch (error) {
+            console.error('Failed to update user status:', error);
+            throw error;
+        }
+    },
+
     gridConfig: {
-        cols: 32,
-        rowHeight: 30,
+        cols: 64,
+        rowHeight: 15,
         gap: 16,
-        iconSize: 64
+        iconSize: 44
     },
     setGridConfig: (config) => {
         set((state) => ({ gridConfig: { ...state.gridConfig, ...config } }));
         useStore.getState().triggerGridPreview();
+        if (window._savePrefsTimeout) clearTimeout(window._savePrefsTimeout);
+        window._savePrefsTimeout = setTimeout(() => {
+            const state = useStore.getState();
+            if (state.user) {
+                pb.collection('TabtopUsers').update(state.user.id, {
+                    preferences: { gridConfig: state.gridConfig, themeConfig: state.themeConfig }
+                });
+            }
+        }, 1000);
     },
     gridOpacity: 0,
     triggerGridPreview: () => {
@@ -43,14 +107,54 @@ export const useStore = create((set) => ({
     },
 
     themeConfig: {
-        primary: '#6366f1',
-        secondary: '#a855f7'
+        primary: '#00bcd4',
+        secondary: '#26c6da',
+        bgType: 'gradient',
+        bgColor: '#131313',
+        bgGradientColor2: '#1e1e1e',
+        bgGradientAngle: 135,
+        bgImage: '',
+        cornerRadius: 100,
+        frameOpacity: 100
     },
-    setThemeConfig: (config) => {
+    setThemeConfig: (config, skipSave = false) => {
         set((state) => {
             const newTheme = { ...state.themeConfig, ...config };
             document.documentElement.style.setProperty('--accent-primary', newTheme.primary);
             document.documentElement.style.setProperty('--accent-secondary', newTheme.secondary);
+            const radiusScale = (newTheme.cornerRadius !== undefined ? newTheme.cornerRadius : 100) / 100;
+            document.documentElement.style.setProperty('--radius-scale', String(radiusScale));
+            const opacityScale = (newTheme.frameOpacity !== undefined ? newTheme.frameOpacity : 100) / 100;
+            document.documentElement.style.setProperty('--frame-opacity-scale', String(opacityScale));
+
+            // Apply background directly to body
+            if (newTheme.bgType === 'solid') {
+                document.body.style.background = newTheme.bgColor;
+                document.body.style.backgroundImage = 'none';
+            } else if (newTheme.bgType === 'gradient') {
+                const angle = newTheme.bgGradientAngle !== undefined ? newTheme.bgGradientAngle : 135;
+                const c1 = newTheme.bgColor || '#0a0a0c';
+                const c2 = newTheme.bgGradientColor2 || '#1a1a2e';
+                document.body.style.background = `linear-gradient(${angle}deg, ${c2} 0%, ${c1} 100%)`;
+            } else if (newTheme.bgType === 'image') {
+                document.body.style.background = newTheme.bgColor; // fallback behind image
+                document.body.style.backgroundImage = `url("${newTheme.bgImage}")`;
+                document.body.style.backgroundSize = 'cover';
+                document.body.style.backgroundPosition = 'center';
+            }
+
+            if (!skipSave) {
+                if (window._savePrefsTimeout) clearTimeout(window._savePrefsTimeout);
+                window._savePrefsTimeout = setTimeout(() => {
+                    const state = useStore.getState();
+                    if (state.user) {
+                        pb.collection('TabtopUsers').update(state.user.id, {
+                            preferences: { gridConfig: state.gridConfig, themeConfig: newTheme }
+                        });
+                    }
+                }, 1000);
+            }
+
             return { themeConfig: newTheme };
         });
     },
@@ -59,7 +163,7 @@ export const useStore = create((set) => ({
     fetchItems: async () => {
         if (!pb.authStore.model) return [];
         try {
-            const records = await pb.collection('TabDash').getFullList();
+            const records = await pb.collection('Tabtop').getFullList();
             set({ items: records });
             return records;
         } catch (error) {
@@ -78,13 +182,13 @@ export const useStore = create((set) => ({
                 if (!data.has('owner')) {
                     data.append('owner', pb.authStore.model?.id);
                 }
-                record = await pb.collection('TabDash').create(data);
+                record = await pb.collection('Tabtop').create(data);
             } else {
                 const payload = {
                     ...data,
                     owner: pb.authStore.model?.id
                 };
-                record = await pb.collection('TabDash').create(payload);
+                record = await pb.collection('Tabtop').create(payload);
             }
             set((state) => ({
                 items: state.items.some(i => i.id === record.id)
@@ -100,7 +204,7 @@ export const useStore = create((set) => ({
 
     syncLayout: async (id, position) => {
         try {
-            await pb.collection('TabDash').update(id, { position });
+            await pb.collection('Tabtop').update(id, { position });
             set((state) => ({
                 items: state.items.map(i => i.id === id ? { ...i, position } : i)
             }));
@@ -109,9 +213,30 @@ export const useStore = create((set) => ({
         }
     },
 
+    bulkSyncLayout: async (updates) => {
+        // updates = [{ id, position }, ...]
+        try {
+            // Update locally first for instant feedback
+            set((state) => ({
+                items: state.items.map(item => {
+                    const update = updates.find(u => u.id === item.id);
+                    return update ? { ...item, position: update.position } : item;
+                })
+            }));
+
+            // Sync with DB – PocketBase doesn't have a bulk update for separate IDs 
+            // BUT we can use Promise.all to trigger them concurrently.
+            await Promise.all(updates.map(u =>
+                pb.collection('Tabtop').update(u.id, { position: u.position })
+            ));
+        } catch (error) {
+            console.error('Failed to sync bulk layout:', error);
+        }
+    },
+
     updateItem: async (id, data) => {
         try {
-            const record = await pb.collection('TabDash').update(id, data);
+            const record = await pb.collection('Tabtop').update(id, data);
             set((state) => ({
                 items: state.items.map(i => i.id === id ? record : i)
             }));
@@ -123,7 +248,7 @@ export const useStore = create((set) => ({
 
     deleteItem: async (id) => {
         try {
-            await pb.collection('TabDash').delete(id);
+            await pb.collection('Tabtop').delete(id);
             set((state) => ({ items: state.items.filter(i => i.id !== id) }));
         } catch (error) {
             console.error('Failed to delete item:', error);
@@ -131,7 +256,7 @@ export const useStore = create((set) => ({
     },
 
     subscribe: () => {
-        pb.collection('TabDash').subscribe('*', ({ action, record }) => {
+        pb.collection('Tabtop').subscribe('*', ({ action, record }) => {
             set((state) => {
                 let newItems = [...state.items];
                 if (action === 'create') {
@@ -152,7 +277,7 @@ export const useStore = create((set) => ({
     },
 
     unsubscribe: () => {
-        pb.collection('TabDash').unsubscribe('*');
+        pb.collection('Tabtop').unsubscribe('*');
     }
 }));
 
@@ -162,3 +287,22 @@ useStore.getState().subscribe();
 pb.authStore.onChange((token, model) => {
     useStore.getState().setUser(model);
 });
+
+// Apply default theme to CSS immediately on startup (before any async DB load)
+// This ensures CSS variables match the store's initial state from frame 1
+useStore.getState().setThemeConfig({}, true);
+
+// Load preferences on startup — fetch fresh user record so we get the latest
+// saved preferences, not the stale snapshot cached in localStorage at login time
+if (pb.authStore.isValid) {
+    pb.collection('TabtopUsers').authRefresh()
+        .then(({ record }) => {
+            useStore.getState().setUser(record);
+        })
+        .catch(() => {
+            // Token expired or network error — fall back to cached model
+            if (pb.authStore.model) {
+                useStore.getState().setUser(pb.authStore.model);
+            }
+        });
+}

@@ -1,23 +1,68 @@
 import React, { useState } from 'react';
-import { X, Save, Clock, Cloud, Rss, Search } from 'lucide-react';
+import { X, Save, Clock, Cloud, Rss, Search, Quote, Edit3, Sun, CheckSquare, Smile, Link as LinkIcon, Github, Globe, MessageSquare, Briefcase, BookOpen, Code, Trophy, Map, CalendarDays } from 'lucide-react';
 import { useStore } from '../store/useStore';
 import { ClockWidgetSettings } from './widgets/ClockWidget';
 import { WeatherWidgetSettings } from './widgets/WeatherWidget';
 import { SearchWidgetSettings } from './widgets/SearchWidget';
 import { RSSWidgetSettings } from './widgets/RSSWidget';
+import { QuoteWidgetSettings } from './widgets/QuoteWidget';
+import { NotesWidgetSettings } from './widgets/NotesWidget';
+import { GreetingWidgetSettings } from './widgets/GreetingWidget';
+import { TodoWidgetSettings } from './widgets/TodoWidget';
+import { JokeWidgetSettings } from './widgets/JokeWidget';
+import { LinksWidgetSettings } from './widgets/LinksWidget';
+import { GithubWidgetSettings } from './widgets/GithubWidget';
+import { IpInfoWidgetSettings } from './widgets/IpInfoWidget';
+import { MessageWidgetSettings } from './widgets/MessageWidget';
+import { WorkHoursWidgetSettings } from './widgets/WorkHoursWidget';
+import { LiteratureClockWidgetSettings } from './widgets/LiteratureClockWidget';
+import { JsWidgetSettings } from './widgets/JsWidget';
+import { NbaWidgetSettings } from './widgets/NbaWidget';
+import { RainRadarWidgetSettings } from './widgets/RainRadarWidget';
+import { CalendarWidgetSettings } from './widgets/CalendarWidget';
 
 const SETTINGS_MAP = {
     clock: ClockWidgetSettings,
     weather: WeatherWidgetSettings,
     search: SearchWidgetSettings,
-    rss: RSSWidgetSettings
+    rss: RSSWidgetSettings,
+    quote: QuoteWidgetSettings,
+    notes: NotesWidgetSettings,
+    greeting: GreetingWidgetSettings,
+    todo: TodoWidgetSettings,
+    joke: JokeWidgetSettings,
+    links: LinksWidgetSettings,
+    github: GithubWidgetSettings,
+    ipinfo: IpInfoWidgetSettings,
+    message: MessageWidgetSettings,
+    workhours: WorkHoursWidgetSettings,
+    literatureclock: LiteratureClockWidgetSettings,
+    js: JsWidgetSettings,
+    nba: NbaWidgetSettings,
+    radar: RainRadarWidgetSettings,
+    calendar: CalendarWidgetSettings
 };
 
 const ICON_MAP = {
     clock: Clock,
     weather: Cloud,
     rss: Rss,
-    search: Search
+    search: Search,
+    quote: Quote,
+    notes: Edit3,
+    greeting: Sun,
+    todo: CheckSquare,
+    joke: Smile,
+    links: LinkIcon,
+    github: Github,
+    ipinfo: Globe,
+    message: MessageSquare,
+    workhours: Briefcase,
+    literatureclock: BookOpen,
+    js: Code,
+    nba: Trophy,
+    radar: Map,
+    calendar: CalendarDays
 };
 
 const WidgetSettingsContent = ({ item }) => {
@@ -39,10 +84,14 @@ const WidgetSettingsContent = ({ item }) => {
             background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000
         }}>
-            <div className="glass" style={{
-                width: '400px', borderRadius: '24px', padding: '24px',
+            <div style={{
+                width: '400px', borderRadius: `calc(24px * var(--radius-scale, 1))`, padding: '24px',
                 display: 'flex', flexDirection: 'column', gap: '20px',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                background: 'rgba(18, 18, 18, 0.96)',
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -74,7 +123,7 @@ const WidgetSettingsContent = ({ item }) => {
                         onClick={handleSave}
                         className="glass"
                         style={{
-                            flex: 1, padding: '12px', borderRadius: '12px', background: 'var(--accent-primary)',
+                            flex: 1, padding: '12px', borderRadius: `calc(12px * var(--radius-scale, 1))`, background: 'var(--accent-primary)',
                             color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
                         }}

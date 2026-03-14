@@ -3,12 +3,12 @@ migrate((db) => {
     // Rename the default users collection
     const users = db.findCollectionByNameOrId("users");
     if (users) {
-        users.name = "TabdashUsers";
+        users.name = "TabtopUsers";
         db.saveCollection(users);
     }
 
     const collection = new Collection({
-        "name": "TabDash",
+        "name": "Tabtop",
         "type": "base",
         "system": false,
         "schema": [
@@ -35,7 +35,7 @@ migrate((db) => {
                 "type": "relation",
                 "required": false,
                 "options": {
-                    "collectionId": "TabDash",
+                    "collectionId": "Tabtop",
                     "cascadeDelete": false,
                     "maxSelect": 1,
                 }
@@ -55,11 +55,11 @@ migrate((db) => {
 
     db.saveCollection(collection);
 }, (db) => {
-    const users = db.findCollectionByNameOrId("TabdashUsers");
+    const users = db.findCollectionByNameOrId("TabtopUsers");
     if (users) {
         users.name = "users";
         db.saveCollection(users);
     }
     const q = new QueryGenerator(db);
-    db.deleteCollection(q.setCollectionByName("TabDash").getCollection());
+    db.deleteCollection(q.setCollectionByName("Tabtop").getCollection());
 })

@@ -1,6 +1,6 @@
-# Tabdash (Launcher Edition) - Implementation Plan
+# Tabtop (Launcher Edition) - Implementation Plan
 
-Tabdash is a high-performance, web-based OS Launcher inspired by mobile systems (Android/iOS) and power-user desktop environments. 
+Tabtop is a high-performance, web-based OS Launcher inspired by mobile systems (Android/iOS) and power-user desktop environments. 
 
 Confirmed PocketBase version: **v0.35.1**.
 

@@ -2,8 +2,9 @@ import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react'
 import { Responsive, WidthProvider } from 'react-grid-layout/legacy';
 import { useStore } from '../store/useStore';
 import { ContextMenu } from './ContextMenu';
+import { pb } from '../api/pocketbase';
 import { GridItem } from './GridItem';
-import { Plus, Layout, Link as LinkIcon, Trash2, Rss, LayoutGrid } from 'lucide-react';
+import { Layout, Plus, Link as LinkIcon, Rss, Trash2, Maximize2, Minimize2, Image as ImageIcon, Settings as SettingsIcon, LayoutGrid, Edit3, Share2 } from 'lucide-react';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 
@@ -123,54 +124,83 @@ export const Canvas = () => {
 
     const autoArrange = useCallback(() => {
         const cols = gridConfig.cols;
-        const icons = items.filter(i => i.type !== 'widget');
-        const widgets = items.filter(i => i.type === 'widget');
+        const totalItems = [...items];
 
-        const iconW = 2;
-        const iconH = 3;
-        const iconsPerRow = Math.floor(cols / iconW);
+        // 1. Sort items: Widgets first (by area descending), then Links/Files (alphabetically)
+        totalItems.sort((a, b) => {
+            if (a.type === 'widget' && b.type !== 'widget') return -1;
+            if (a.type !== 'widget' && b.type === 'widget') return 1;
 
-        let y = 0;
+            if (a.type === 'widget') {
+                const areaA = (a.position?.w || 4) * (a.position?.h || 4);
+                const areaB = (b.position?.w || 4) * (b.position?.h || 4);
+                return areaB - areaA;
+            }
 
-        // Place icons in compact rows
-        icons.forEach((icon, idx) => {
-            const col = idx % iconsPerRow;
-            const row = Math.floor(idx / iconsPerRow);
-            const pos = { x: col * iconW, y: row * iconH, w: iconW, h: iconH };
-            syncLayout(icon.id, pos);
+            return (a.name || '').localeCompare(b.name || '');
         });
 
-        y = icons.length > 0 ? Math.ceil(icons.length / iconsPerRow) * iconH : 0;
+        const updates = [];
+        const occupied = new Set(); // Use string "x,y" to track occupied cells
 
-        // Place widgets sequentially below the icons
-        widgets.forEach(widget => {
-            const pos = widget.position || {};
-            const w = pos.w || 8;
-            const h = pos.h || 4;
-            const newPos = { x: 0, y, w, h };
-            syncLayout(widget.id, newPos);
-            y += h;
+        const isAreaFree = (x, y, w, h) => {
+            if (x + w > cols) return false;
+            for (let i = x; i < x + w; i++) {
+                for (let j = y; j < y + h; j++) {
+                    if (occupied.has(`${i},${j}`)) return false;
+                }
+            }
+            return true;
+        };
+
+        const markOccupied = (x, y, w, h) => {
+            for (let i = x; i < x + w; i++) {
+                for (let j = y; j < y + h; j++) {
+                    occupied.add(`${i},${j}`);
+                }
+            }
+        };
+
+
+        totalItems.forEach(item => {
+            const isWidget = item.type === 'widget';
+            // Use current size or reasonable defaults
+            const w = item.position?.w || (isWidget ? 12 : 4);
+            const h = item.position?.h || (isWidget ? 8 : 4);
+
+            // Limit width if it exceeds grid columns
+            const finalW = Math.min(w, cols);
+            const finalH = h;
+
+            let placed = false;
+            // Search row by row
+            for (let y = 0; y < 1000; y++) { // Arbitrary limit to infinite loop
+                for (let x = 0; x <= cols - finalW; x++) {
+                    if (isAreaFree(x, y, finalW, finalH)) {
+                        const newPos = { x, y, w: finalW, h: finalH };
+                        updates.push({ id: item.id, position: newPos });
+                        markOccupied(x, y, finalW, finalH);
+                        placed = true;
+                        break;
+                    }
+                }
+                if (placed) break;
+            }
         });
-    }, [items, gridConfig.cols, syncLayout]);
+
+        if (updates.length > 0) {
+            useStore.getState().bulkSyncLayout(updates);
+        }
+    }, [items, gridConfig.cols]);
 
     const menuItems = useMemo(() => {
-        const base = [
-            { label: 'Auto Arrange', icon: <LayoutGrid size={16} />, onClick: autoArrange },
-            { type: 'separator' },
-            { label: 'Add Link', icon: <LinkIcon size={16} />, onClick: () => handleCreate('link') },
-            { label: 'Add Search Bar', icon: <Layout size={16} />, onClick: () => handleCreate('widget', { name: 'Search', fields: { config: { type: 'search', engine: 'google' } }, position: { x: 0, y: 0, w: 12, h: 2 } }) },
-            { label: 'Add Weather Bar', icon: <Layout size={16} />, onClick: () => handleCreate('widget', { name: 'Weather', fields: { config: { type: 'weather', city: 'Berlin' } }, position: { x: 0, y: 0, w: 8, h: 4 } }) },
-            { label: 'Add Clock', icon: <Plus size={16} />, onClick: () => handleCreate('widget', { name: 'Clock', fields: { config: { type: 'clock', mode: 'digital' } }, position: { x: 0, y: 0, w: 8, h: 4 } }) },
-            { label: 'Add RSS Feed', icon: <Rss size={16} />, onClick: () => handleCreate('widget', { name: 'News', fields: { config: { type: 'rss', url: 'https://news.google.com/rss' } }, position: { x: 0, y: 0, w: 8, h: 8 } }) },
-            { label: 'Add Board', icon: <Plus size={16} />, onClick: () => handleCreate('board') },
-        ];
+        const baseMenu = [];
 
+        // Context-specific widget options at the very top
         if (contextMenu.targetId) {
             const targetItem = items.find(i => i.id === contextMenu.targetId);
-            const extraOptions = [];
-
             if (targetItem?.type === 'widget' && targetItem.config?.type === 'clock') {
-                extraOptions.push({
+                baseMenu.push({
                     label: targetItem.config.mode === 'analog' ? 'Switch to Digital' : 'Switch to Analog',
                     icon: <Plus size={16} />,
                     onClick: () => {
@@ -178,12 +208,30 @@ export const Canvas = () => {
                         useStore.getState().updateItem(targetItem.id, { config: newConfig });
                     }
                 });
+                baseMenu.push({ type: 'separator' });
             }
+        }
 
+        // Add items in the middle
+        baseMenu.push(
+            { label: 'Add Link', icon: <LinkIcon size={16} />, onClick: () => handleCreate('link') },
+            {
+                label: 'Add Widget...',
+                icon: <LayoutGrid size={16} />,
+                onClick: () => useStore.getState().toggleWidgetGallery(true)
+            },
+            { type: 'separator' }
+        );
+
+        // Management tools at the bottom
+        baseMenu.push({ label: 'Auto Arrange', icon: <Layout size={16} />, onClick: autoArrange });
+
+        if (contextMenu.targetId) {
+            const targetItem = items.find(i => i.id === contextMenu.targetId);
             if (targetItem?.type === 'link' || targetItem?.type === 'file') {
-                extraOptions.push({
+                baseMenu.push({
                     label: 'Rename Item',
-                    icon: <Plus size={16} />,
+                    icon: <Edit3 size={16} />,
                     onClick: () => {
                         const newName = prompt('Enter new name (leave empty for icon-only):', targetItem.name);
                         if (newName !== null) {
@@ -191,15 +239,42 @@ export const Canvas = () => {
                         }
                     }
                 });
+                baseMenu.push({
+                    label: 'Share',
+                    icon: <Share2 size={16} />,
+                    onClick: async () => {
+                        let url = '';
+                        if (targetItem.type === 'link') {
+                            url = targetItem.config?.url;
+                            if (!url.startsWith('http')) url = 'https://' + url;
+                        } else if (targetItem.type === 'file' && targetItem.payload) {
+                            if (!targetItem.shared) {
+                                await useStore.getState().updateItem(targetItem.id, { shared: true });
+                            }
+                            try {
+                                const token = await pb.files.getToken();
+                                url = pb.files.getURL(targetItem, targetItem.payload, { token });
+                            } catch (error) {
+                                console.error('Token fetch failed', error);
+                                url = pb.files.getURL(targetItem, targetItem.payload);
+                            }
+                        }
+                        if (url) {
+                            navigator.clipboard.writeText(url);
+                        }
+                    }
+                });
+            } else if (targetItem?.type === 'widget') {
+                baseMenu.push({
+                    label: 'Widget Settings',
+                    icon: <SettingsIcon size={16} />,
+                    onClick: () => useStore.getState().setWidgetSettings(true, targetItem)
+                });
             }
-
-            return [
-                ...extraOptions,
-                ...base,
-                { label: 'Delete Item', icon: <Trash2 size={16} />, danger: true, onClick: () => deleteItem(contextMenu.targetId) }
-            ];
+            baseMenu.push({ label: 'Delete Item', icon: <Trash2 size={16} />, danger: true, onClick: () => deleteItem(contextMenu.targetId) });
         }
-        return base;
+
+        return baseMenu;
     }, [contextMenu.targetId, items, handleCreate, deleteItem, autoArrange]);
 
     return (
@@ -246,7 +321,8 @@ export const Canvas = () => {
                 onResizeStop={handleLayoutChange}
                 margin={[gridConfig.gap, gridConfig.gap]}
                 compactType={null}
-                preventCollision={false}
+                preventCollision={true}
+                resizeHandles={['se', 'sw']}
             >
                 {items.map(item => (
                     <div key={item.id} i={item.id} className="drag-handle">

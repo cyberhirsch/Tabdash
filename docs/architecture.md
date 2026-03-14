@@ -1,6 +1,6 @@
 # Architecture Overview
 
-TabDash is built with a modern, decoupled architecture focusing on simplicity, real-time updates, and a glassmorphism aesthetic.
+Tabtop is built with a modern, decoupled architecture focusing on simplicity, real-time updates, and a glassmorphism aesthetic.
 
 ## 🏗️ System Components
 
@@ -12,13 +12,13 @@ TabDash is built with a modern, decoupled architecture focusing on simplicity, r
 
 ### 2. Backend (PocketBase)
 - **Database**: SQLite (embedded in PocketBase).
-- **Authentication**: Built-in PocketBase auth with a custom `TabdashUsers` collection.
+- **Authentication**: Built-in PocketBase auth with a custom `TabtopUsers` collection.
 - **File Storage**: Handles widget icons and user-uploaded files.
 - **Real-time**: Leverages PocketBase's SSE (Server-Sent Events) for instant dashboard updates across devices.
 
 ## 📊 Data Model
 
-### TabDash Collection
+### Tabtop Collection
 Stores all dashboard entities (Widgets, Links, Files).
 
 | Field        | Type     | Description                                                         |
@@ -39,4 +39,17 @@ Stores all dashboard entities (Widgets, Links, Files).
 3. **Rendering**: `GridItem.jsx` decides between the "Widget" flavor (framed/resizable) and "Desktop Icon" flavor (frameless/fixed-size).
 
 ### Real-time Sync
-Upon initialization, the store calls `subscribe()`. Any changes made to the `TabDash` collection (even from a different browser) are pushed via SSE and reflected instantly in the local Zustand state.
+Upon initialization, the store calls `subscribe()`. Any changes made to the `Tabtop` collection (even from a different browser) are pushed via SSE and reflected instantly in the local Zustand state.
+
+## 🛡️ Administrative System
+
+### Admin Panel
+- **Component**: `AdminPanel.jsx`. A restricted dashboard accessible only to users with `account_type: 'admin'`.
+- **Functionality**: Allows multi-user management, including modifying account types (`trial`, `member`, `patron`, `admin`).
+- **Authorization**: Protected both on the frontend (UI state) and backend (PocketBase API Rules).
+
+### User Status Flow
+1. **Trial**: New users start with a 14-day trial period.
+2. **Expirations**: `App.jsx` validates the trial duration or premium status (`patron/admin`).
+3. **Bypass**: Users flagged as `patron` or `admin` in the database bypass expiration screens.
+4. **Diagnostic Mode**: A hidden refresh and diagnostic view on the expiry screen handles edge cases with stale sessions or role updates.

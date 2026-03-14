@@ -1,5 +1,5 @@
 /**
- * Tabdash Schema Sync Script
+ * Tabtop Schema Sync Script
  * This script programmatically pushes the pb_schema.json to the PocketBase server.
  */
 

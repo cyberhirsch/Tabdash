@@ -1,8 +1,8 @@
-# 📦 Tabdash
+# 📦 Tabtop
 
-**Tabdash** is a modern, personalized dashboard for your browser. It features a sleek glassmorphism design, real-time synchronization, and a flexible grid layout to organize your digital life.
+**Tabtop** is a modern, personalized dashboard for your browser. It features a sleek glassmorphism design, real-time synchronization, and a flexible grid layout to organize your digital life.
 
-![Dashboard Preview](https://via.placeholder.com/800x450.png?text=Tabdash+Dashboard+Preview)
+![Dashboard Preview](https://via.placeholder.com/800x450.png?text=Tabtop+Dashboard+Preview)
 
 ## ✨ Features
 
@@ -11,13 +11,14 @@
   - **Widgets**: Framed, resizable tools like Clocks (Digital/Analog), Weather, and Search Bars.
   - **Desktop Icons**: Frameless, clean shortcuts for your favorite links and uploaded files.
 - **Glassmorphism UI**: Beautiful, semi-transparent interface with smooth animations and hover effects.
+- **Admin Dashboard**: Advanced user management system for administrators to control access and plan statuses.
 - **PocketBase Integration**: Secure authentication and real-time data persistence.
 - **File Support**: Drag and drop files directly onto the dashboard to upload and store them.
 - **Live Sync**: All changes are synchronized across devices in real-time.
 
 ## 🚀 Self-Hosting Instructions
 
-Hosting Tabdash yourself is straightforward. You'll need two main components: the **PocketBase** backend and the **React** frontend.
+Hosting Tabtop yourself is straightforward. You'll need two main components: the **PocketBase** backend and the **React** frontend.
 
 ### 1. Backend: PocketBase Setup
 
@@ -27,17 +28,17 @@ Hosting Tabdash yourself is straightforward. You'll need two main components: th
 4.  **Import Schema**: 
     - In the Admin UI, go to **Settings > Export collections**.
     - Click **Import (JSON)** and paste the contents of `pb_schema.json` from this repository.
-    - *Note*: Ensure the `TabDash` and `TabdashUsers` collections are created correctly.
+    - *Note*: Ensure the `Tabtop` and `TabtopUsers` collections are created correctly.
 5.  **Configure API Rules**: 
     - The schema includes predefined API rules for security. 
-    - Make sure the `TabdashUsers` collection allows public creation if you want users to sign up themselves.
+    - Make sure the `TabtopUsers` collection allows public creation if you want users to sign up themselves.
 
 ### 2. Frontend: Configuration & Deployment
 
 1.  **Clone the Repo**:
     ```bash
-    git clone https://github.com/cyberhirsch/Tabdash.git
-    cd Tabdash/frontend
+    git clone https://github.com/cyberhirsch/Tabtop.git
+    cd Tabtop/frontend
     ```
 2.  **Environment Variables**:
     - Create a `.env` file in the `frontend` directory based on `.env.example`:

@@ -1,6 +1,6 @@
 [
     {
-        "name": "TabdashUsers",
+        "name": "TabtopUsers",
         "id": "_pb_users_auth_",
         "type": "auth",
         "system": false,
@@ -9,13 +9,30 @@
                 "name": "preferences",
                 "type": "json",
                 "options": {}
+            },
+            {
+                "name": "trial_started_at",
+                "type": "date",
+                "options": {}
+            },
+            {
+                "name": "account_type",
+                "type": "select",
+                "options": {
+                    "values": [
+                        "admin",
+                        "patron",
+                        "member",
+                        "trial"
+                    ]
+                }
             }
         ],
-        "listRule": "id = @request.auth.id",
-        "viewRule": "id = @request.auth.id",
+        "listRule": "id = @request.auth.id || @request.auth.account_type = 'admin'",
+        "viewRule": "id = @request.auth.id || @request.auth.account_type = 'admin'",
         "createRule": "",
-        "updateRule": "id = @request.auth.id",
-        "deleteRule": "id = @request.auth.id",
+        "updateRule": "id = @request.auth.id || @request.auth.account_type = 'admin'",
+        "deleteRule": "id = @request.auth.id || @request.auth.account_type = 'admin'",
         "options": {
             "allowEmailAuth": true,
             "allowOAuth2Auth": true,
@@ -29,8 +46,8 @@
         }
     },
     {
-        "id": "pbc_tabdash001",
-        "name": "TabDash",
+        "id": "pbc_tabtop001",
+        "name": "Tabtop",
         "type": "base",
         "system": false,
         "schema": [
@@ -65,7 +82,7 @@
                 "type": "relation",
                 "required": false,
                 "options": {
-                    "collectionId": "pbc_tabdash001",
+                    "collectionId": "pbc_tabtop001",
                     "cascadeDelete": false,
                     "minSelect": null,
                     "maxSelect": 1,
@@ -90,7 +107,7 @@
                     "maxSize": 5242880,
                     "mimeTypes": [],
                     "thumbs": [],
-                    "protected": false
+                    "protected": true
                 }
             },
             {
@@ -114,10 +131,15 @@
                 "name": "position",
                 "type": "json",
                 "options": {}
+            },
+            {
+                "name": "shared",
+                "type": "bool",
+                "options": {}
             }
         ],
         "listRule": "@request.auth.id = owner.id",
-        "viewRule": "@request.auth.id = owner.id",
+        "viewRule": "@request.auth.id = owner.id || shared = true",
         "createRule": "@request.auth.id = owner.id",
         "updateRule": "@request.auth.id = owner.id",
         "deleteRule": "@request.auth.id = owner.id",

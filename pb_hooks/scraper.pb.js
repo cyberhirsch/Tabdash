@@ -1,32 +1,35 @@
-onRecordAfterCreateRequest((e) => {
+onRecordAfterCreateSuccess((e) => {
     const record = e.record;
+
+    // Only run for "link" types
     if (record.get("type") !== "link") return;
 
-    const config = JSON.parse(record.getString("config") || "{}");
-    const url = config.url;
+    // Handle config field (works if it's already an object or a JSON string)
+    const configData = record.get("config");
+    const config = typeof configData === 'string' ? JSON.parse(configData || "{}") : configData;
+    const url = config?.url;
 
     if (!url) return;
 
     try {
-        // Simple scraping logic for PocketBase JS Hooks
-        // 1. Try to get the favicon URL
+        // Extract domain for the favicon service
         const domain = url.split('/')[2];
         const faviconUrl = `https://www.google.com/s2/favicons?sz=128&domain=${domain}`;
 
-        // 2. Fetch and skip if failure (Google favicon service is reliable)
         const res = $http.send({
             url: faviconUrl,
             method: "GET",
         });
 
         if (res.statusCode === 200) {
-            // Update the record with the cached icon
-            // Note: In PB JS hooks, we use $app.dao().saveRecord()
+            // Fetch and set the file to the 'cache_icon' field
             const file = $http.fileFromURL(faviconUrl);
             record.set("cache_icon", file);
-            $app.dao().saveRecord(record);
+
+            // In v0.23, $app.save(record) is the standard way to persist changes
+            $app.save(record);
         }
     } catch (err) {
-        console.error("Scraper Error:", err);
+        console.error("Tabtop Scraper Error:", err);
     }
-}, "TabDash");
+}, "Tabtop");
